@@ -14,11 +14,6 @@ app.get("/api", (req, res) => {
   res.json({ users: ["userOne", "userTwo", "userThree"] });
 });
 
-app.get("/api/data", (req, res) => {
-  const data = { message: "Ini adalah data dari server Express!" };
-  res.json(data);
-});
-
-app.listen(port, "0.0.0.0", () => {
+app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
