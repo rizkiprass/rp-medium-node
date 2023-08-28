@@ -25,6 +25,10 @@ app.get("/db", (req, res) => {
   });
 });
 
+app.get("/api", (req, res) => {
+  res.json({ users: ["userOne", "userTwo", "userThree"] });
+});
+
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
