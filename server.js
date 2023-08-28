@@ -13,6 +13,10 @@ app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
+app.get("/api", (req, res) => {
+  res.json({ users: ["userOne", "userTwo", "userThree"] });
+});
+
 app.get("/db", (req, res) => {
   const sql = "SELECT * FROM user";
   db.query(sql, (err, result) => {
