@@ -3,6 +3,7 @@ const app = express();
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const db = require("./connection");
+const response = require("./response");
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -16,6 +17,11 @@ app.get("/", (req, res) => {
 app.get("/api", (req, res) => {
   res.json({ users: ["userOne", "userTwo", "userThree"] });
 });
+
+app.get("/api2", (req, res) => {
+  response(200, ["userOne", "userTwo", "userThree"], "ini message", res);
+});
+
 
 app.get("/db", (req, res) => {
   const sql = "SELECT * FROM user";
