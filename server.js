@@ -3,6 +3,7 @@ const app = express();
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const db = require("./connection");
+const db_ecommerce = require("./connection2");
 const response = require("./response");
 
 app.use(cors());
@@ -34,6 +35,80 @@ app.get("/db", (req, res) => {
     }
   });
 });
+
+// DB ecommerce
+// [INSERT] Endpoint untuk menambahkan produk
+app.post('/api/products', (req, res) => {
+  const { name, price } = req.body;
+  const newProduct = { name, price };
+
+  db_ecommerce.query('INSERT INTO products SET ?', newProduct, (err, result) => {
+      if (err) {
+          console.error('Error inserting product: ' + err.message);
+          res.status(500).json({ error: 'Gagal menambahkan produk' });
+          return;
+      }
+      console.log('Produk berhasil ditambahkan');
+      res.status(201).json({ message: 'Produk berhasil ditambahkan' });
+  });
+});
+
+// [GET] Endpoint untuk mendapatkan semua produk
+app.get('/api/products', (req, res) => {
+  db_ecommerce.query('SELECT * FROM products', (err, results) => {
+      if (err) {
+          console.error('Error fetching products: ' + err.message);
+          res.status(500).json({ error: 'Gagal mengambil data produk' });
+          return;
+      }
+      res.status(200).json(results);
+  });
+});
+
+// [DELETE] Endpoint untuk menghapus produk berdasarkan ID
+app.delete('/api/products/:id', (req, res) => {
+  const productId = req.params.id;
+
+  db_ecommerce.query('DELETE FROM products WHERE id = ?', productId, (err, result) => {
+      if (err) {
+          console.error('Error deleting product: ' + err.message);
+          res.status(500).json({ error: 'Gagal menghapus produk' });
+          return;
+      }
+
+      if (result.affectedRows === 0) {
+          res.status(404).json({ error: 'Produk tidak ditemukan' });
+          return;
+      }
+
+      console.log('Produk berhasil dihapus');
+      res.status(200).json({ message: 'Produk berhasil dihapus' });
+  });
+});
+
+// [PUT] Endpoint untuk mengupdate produk berdasarkan ID
+app.put('/api/products/:id', (req, res) => {
+  const productId = req.params.id;
+  const { name, price } = req.body;
+  const updatedProduct = { name, price };
+
+  db_ecommerce.query('UPDATE products SET ? WHERE id = ?', [updatedProduct, productId], (err, result) => {
+      if (err) {
+          console.error('Error updating product: ' + err.message);
+          res.status(500).json({ error: 'Gagal mengupdate produk' });
+          return;
+      }
+
+      if (result.affectedRows === 0) {
+          res.status(404).json({ error: 'Produk tidak ditemukan' });
+          return;
+      }
+
+      console.log('Produk berhasil diupdate');
+      res.status(200).json({ message: 'Produk berhasil diupdate' });
+  });
+});
+
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
