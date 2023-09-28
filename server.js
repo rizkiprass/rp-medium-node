@@ -19,6 +19,7 @@ app.get("/api", (req, res) => {
   res.json({ users: ["userOne", "userTwo", "userThree"] });
 });
 
+//response.js format dari dea afrizal
 app.get("/api2", (req, res) => {
   response(200, ["userOne", "userTwo", "userThree"], "ini message", res);
 });
