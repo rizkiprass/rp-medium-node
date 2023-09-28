@@ -65,6 +65,28 @@ app.get('/api/products', (req, res) => {
   });
 });
 
+// [GET] Endpoint to get a single product by ID
+app.get('/api/products/:productId', (req, res) => {
+  const productId = req.params.productId; // Get the product ID from the URL parameter
+
+  // Query the database to retrieve the product with the specified ID
+  db_ecommerce.query('SELECT * FROM products WHERE id = ?', [productId], (err, results) => {
+    if (err) {
+      console.error('Error fetching product: ' + err.message);
+      res.status(500).json({ error: 'Gagal mengambil data produk' });
+      return;
+    }
+
+    if (results.length === 0) {
+      // If no product with the specified ID is found, return a 404 Not Found response
+      res.status(404).json({ error: 'Produk tidak ditemukan' });
+    } else {
+      // If a product with the specified ID is found, return it as JSON
+      res.status(200).json(results[0]);
+    }
+  });
+});
+
 // [DELETE] Endpoint untuk menghapus produk berdasarkan ID
 app.delete('/api/products/:id', (req, res) => {
   const productId = req.params.id;
