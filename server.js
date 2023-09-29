@@ -5,11 +5,25 @@ const bodyParser = require("body-parser");
 const db = require("./connection");
 const db_ecommerce = require("./connection2");
 const response = require("./response");
+const multer = require("multer");
 
+//middleware
 app.use(cors());
 app.use(bodyParser.json());
 
 const port = 8080;
+
+// Konfigurasi multer untuk menyimpan file di folder tertentu
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/"); // Folder tempat gambar akan disimpan
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + "-" + file.originalname); // Nama file yang disimpan
+  },
+});
+
+const upload = multer({ storage: storage });
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
@@ -39,20 +53,23 @@ app.get("/db", (req, res) => {
 
 // DB ecommerce
 // [INSERT] Endpoint untuk menambahkan produk
-app.post('/api/products', (req, res) => {
+app.post("/api/products", upload.single("image"), (req, res) => {
   const { name, price } = req.body;
-  const newProduct = { name, price };
+  const image = req.file.filename; // Nama file gambar yang diunggah
 
-  db_ecommerce.query('INSERT INTO products SET ?', newProduct, (err, result) => {
-      if (err) {
-          console.error('Error inserting product: ' + err.message);
-          res.status(500).json({ error: 'Gagal menambahkan produk' });
-          return;
-      }
-      console.log('Produk berhasil ditambahkan');
-      res.status(201).json({ message: 'Produk berhasil ditambahkan' });
+  const newProduct = { name, price, image };
+
+  db_ecommerce.query("INSERT INTO products SET ?", newProduct, (err, result) => {
+    if (err) {
+      console.error("Error inserting product: " + err.message);
+      res.status(500).json({ error: "Gagal menambahkan produk" });
+      return;
+    }
+    console.log("Produk berhasil ditambahkan");
+    res.status(201).json({ message: "Produk berhasil ditambahkan" });
   });
 });
+
 
 // [GET] Endpoint untuk mendapatkan semua produk
 app.get('/api/products', (req, res) => {
