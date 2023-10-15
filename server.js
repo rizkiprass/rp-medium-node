@@ -55,74 +55,82 @@ app.get("/db", (req, res) => {
 // [INSERT] Endpoint untuk menambahkan produk
 app.post("/api/products", upload.single("image"), (req, res) => {
   const { name, price } = req.body;
-  const image = req.file.filename; // Nama file gambar yang diunggah
+
+  // Check if a file was uploaded
+  const image = req.file ? req.file.filename : null; // Set to null if no file was uploaded
 
   const newProduct = { name, price, image };
 
   db_ecommerce.query("INSERT INTO products SET ?", newProduct, (err, result) => {
     if (err) {
       console.error("Error inserting product: " + err.message);
-      res.status(500).json({ error: "Gagal menambahkan produk" });
-      return;
+      // Menggunakan response.js untuk mengirim respon
+      response(500, { error: "Gagal menambahkan produk" }, "Gagal menambahkan produk", res);
+    } else {
+      console.log("Produk berhasil ditambahkan");
+      // Menggunakan response.js untuk mengirim respon
+      response(201, { message: "Produk berhasil ditambahkan" }, "Produk berhasil ditambahkan", res);
     }
-    console.log("Produk berhasil ditambahkan");
-    res.status(201).json({ message: "Produk berhasil ditambahkan" });
   });
 });
+
 
 
 // [GET] Endpoint untuk mendapatkan semua produk
 app.get('/api/products', (req, res) => {
   db_ecommerce.query('SELECT * FROM products', (err, results) => {
-      if (err) {
-          console.error('Error fetching products: ' + err.message);
-          res.status(500).json({ error: 'Gagal mengambil data produk' });
-          return;
-      }
-      res.status(200).json(results);
+    if (err) {
+      console.error('Error fetching products: ' + err.message);
+      // Menggunakan response.js untuk mengirim respon
+      response(500, null, 'Gagal mengambil data produk', res);
+    } else {
+      // Menggunakan response.js untuk mengirim respon
+      response(200, results, 'Data produk berhasil diambil', res);
+    }
   });
 });
 
 // [GET] Endpoint to get a single product by ID
 app.get('/api/products/:productId', (req, res) => {
-  const productId = req.params.productId; // Get the product ID from the URL parameter
+  const productId = req.params.productId; // Dapatkan ID produk dari parameter URL
 
   // Query the database to retrieve the product with the specified ID
   db_ecommerce.query('SELECT * FROM products WHERE id = ?', [productId], (err, results) => {
     if (err) {
       console.error('Error fetching product: ' + err.message);
-      res.status(500).json({ error: 'Gagal mengambil data produk' });
+      response(500, null, 'Gagal mengambil data produk', res);
       return;
     }
 
     if (results.length === 0) {
-      // If no product with the specified ID is found, return a 404 Not Found response
-      res.status(404).json({ error: 'Produk tidak ditemukan' });
+      // Jika tidak ada produk dengan ID yang ditentukan, kirim respons 404 Not Found
+      response(404, null, 'Produk tidak ditemukan', res);
     } else {
-      // If a product with the specified ID is found, return it as JSON
-      res.status(200).json(results[0]);
+      // Jika produk dengan ID yang ditentukan ditemukan, kirimnya sebagai JSON
+      response(200, results[0], 'Data produk berhasil diambil', res);
     }
   });
 });
+
 
 // [DELETE] Endpoint untuk menghapus produk berdasarkan ID
 app.delete('/api/products/:id', (req, res) => {
   const productId = req.params.id;
 
   db_ecommerce.query('DELETE FROM products WHERE id = ?', productId, (err, result) => {
-      if (err) {
-          console.error('Error deleting product: ' + err.message);
-          res.status(500).json({ error: 'Gagal menghapus produk' });
-          return;
-      }
+    if (err) {
+      console.error('Error deleting product: ' + err.message);
+      response(500, null, 'Gagal menghapus produk', res);
+      return;
+    }
 
-      if (result.affectedRows === 0) {
-          res.status(404).json({ error: 'Produk tidak ditemukan' });
-          return;
-      }
+    if (result.affectedRows === 0) {
+      response(404, null, 'Produk tidak ditemukan', res);
+      return;
+    }
 
-      console.log('Produk berhasil dihapus');
-      res.status(200).json({ message: 'Produk berhasil dihapus' });
+    console.log('Produk berhasil dihapus');
+    response(200, null, 'Produk berhasil dihapus', res);
   });
 });
 
@@ -133,21 +141,22 @@ app.put('/api/products/:id', (req, res) => {
   const updatedProduct = { name, price };
 
   db_ecommerce.query('UPDATE products SET ? WHERE id = ?', [updatedProduct, productId], (err, result) => {
-      if (err) {
-          console.error('Error updating product: ' + err.message);
-          res.status(500).json({ error: 'Gagal mengupdate produk' });
-          return;
-      }
+    if (err) {
+      console.error('Error updating product: ' + err.message);
+      response(500, null, 'Gagal mengupdate produk', res);
+      return;
+    }
 
-      if (result.affectedRows === 0) {
-          res.status(404).json({ error: 'Produk tidak ditemukan' });
-          return;
-      }
+    if (result.affectedRows === 0) {
+      response(404, null, 'Produk tidak ditemukan', res);
+      return;
+    }
 
-      console.log('Produk berhasil diupdate');
-      res.status(200).json({ message: 'Produk berhasil diupdate' });
+    console.log('Produk berhasil diupdate');
+    response(200, null, 'Produk berhasil diupdate', res);
   });
 });
+
 
 
 app.listen(port, () => {
