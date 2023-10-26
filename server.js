@@ -10,6 +10,7 @@ const multer = require("multer");
 //middleware
 app.use(cors());
 app.use(bodyParser.json());
+app.use(express.json());
 
 const port = 8080;
 
@@ -76,8 +77,8 @@ app.post("/api/products", upload.single("image"), (req, res) => {
 
 
 
-// [GET] Endpoint untuk mendapatkan semua produk
-app.get('/api/products', (req, res) => {
+// [GET] Endpoint untuk mendapatkan semua produk yang memerlukan otentikasi
+app.get('/api/products', authenticateToken, (req, res) => {
   db_ecommerce.query('SELECT * FROM products', (err, results) => {
     if (err) {
       console.error('Error fetching products: ' + err.message);
@@ -89,6 +90,7 @@ app.get('/api/products', (req, res) => {
     }
   });
 });
+
 
 // [GET] Endpoint to get a single product by ID
 app.get('/api/products/:productId', (req, res) => {
@@ -158,6 +160,77 @@ app.put('/api/products/:id', (req, res) => {
 });
 
 
+//////////////////////////////////////////////////////////
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
+
+// Endpoint untuk registrasi
+app.post('/register', (req, res) => {
+  const { email, password } = req.body;
+
+  // Hash password sebelum menyimpannya di database
+  bcrypt.hash(password, saltRounds, (err, hash) => {
+    if (err) {
+      console.error('Gagal menghash password: ' + err);
+      res.status(500).send('Terjadi kesalahan saat registrasi.');
+    } else {
+      const user = { email, password: hash };
+      db_ecommerce.query('INSERT INTO users SET ?', user, (error, results) => {
+        if (error) {
+          console.error('Gagal menyimpan data ke database: ' + error);
+          res.status(500).send('Terjadi kesalahan saat registrasi.');
+        } else {
+          res.status(201).send('Registrasi berhasil!');
+        }
+      });
+    }
+  });
+});
+
+const jwt = require('jsonwebtoken');
+
+// Endpoint untuk login
+app.post('/login', (req, res) => {
+  const { email, password } = req.body;
+  db_ecommerce.query('SELECT * FROM users WHERE email = ?', email, (error, results) => {
+    if (error) {
+      console.error('Gagal mengambil data dari database: ' + error);
+      res.status(500).send('Terjadi kesalahan saat login.');
+    } else if (results.length > 0) {
+      const user = results[0];
+      bcrypt.compare(password, user.password, (err, result) => {
+        if (result) {
+          // Buat access token
+          const accessToken = jwt.sign({ email: user.email, id: user.id }, 'rahasia-super-rahasia', { expiresIn: '1h' });
+
+          res.json({ accessToken });
+        } else {
+          res.status(401).send('Kombinasi email dan password tidak valid.');
+        }
+      });
+    } else {
+      res.status(401).send('Kombinasi email dan password tidak valid.');
+    }
+  });
+});
+
+// Middleware untuk memeriksa access token
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ message: 'Tidak ada token, autentikasi gagal.' });
+  }
+
+  jwt.verify(token, 'rahasia-super-rahasia', (err, user) => {
+    if (err) {
+      return res.status(403).json({ message: 'Token tidak valid.' });
+    }
+    req.user = user;
+    next();
+  });
+}
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
