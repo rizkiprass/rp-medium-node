@@ -58,11 +58,10 @@ app.get("/db", (req, res) => {
 
 //new
 const productsRoutes = require('./routes/products');
-const registerRoutes = require('./routes/register');
+const authRoutes = require('./routes/auth.js');
 
-app.use('/api/products', productsRoutes);
-app.use('/register', registerRoutes);
-app.use('/', registerRoutes);
+app.use('/products', productsRoutes);
+app.use('/auth', authRoutes);
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
