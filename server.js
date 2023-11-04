@@ -53,12 +53,9 @@ app.get("/db", (req, res) => {
 });
 
 
-
-
-
 //new
-const productsRoutes = require('./routes/products');
-const authRoutes = require('./routes/auth.js');
+const productsRoutes = require('./routes/productsRoutes.js');
+const authRoutes = require('./routes/authRoutes.js');
 
 app.use('/products', productsRoutes);
 app.use('/auth', authRoutes);
