@@ -14,13 +14,17 @@ function getAllProducts(req, res) {
 
 
 function addProduct(req, res) {
-    const { name, price } = req.body;
-  
-    // Check if a file was uploaded
-    const image = req.file ? req.file.filename : null; // Set to null if no file was uploaded
-  
+  const { name, price } = req.body;
+
+  // Check if a file was uploaded
+  const image = req.file ? req.file.filename : null; // Set to null if no file was uploaded
+
+  if (!name || name.trim() === "") {
+    // Respond with an error if 'name' is empty or null
+    response(400, { error: 'Name cannot be null or empty' }, 'Name cannot be null or empty', res);
+  } else {
     const newProduct = { name, price, image };
-  
+
     db_ecommerce.query('INSERT INTO products SET ?', newProduct, (err, result) => {
       if (err) {
         console.error('Error inserting product: ' + err.message);
@@ -31,6 +35,8 @@ function addProduct(req, res) {
       }
     });
   }
+}
+
 
 
   function deleteProduct(req, res) {
