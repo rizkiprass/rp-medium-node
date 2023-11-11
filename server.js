@@ -56,9 +56,11 @@ app.get("/db", (req, res) => {
 //new
 const productsRoutes = require('./routes/productsRoutes.js');
 const authRoutes = require('./routes/authRoutes.js');
+const cartRoutes = require('./routes/cartRoutes.js');
 
 app.use('/products', productsRoutes);
 app.use('/auth', authRoutes);
+app.use('/cart', cartRoutes);
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
