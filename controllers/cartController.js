@@ -94,6 +94,36 @@ function getCart(req, res) {
     });
   }
 
+  function updateCartItem(req, res) {
+    const { cartItemId, quantity } = req.body;
+
+    // Validasi input
+    if (!cartItemId || !quantity || isNaN(quantity) || quantity <= 0) {
+        return response(400, { error: 'Invalid input' }, 'Invalid input', res);
+    }
+
+    // Mendapatkan ID pengguna dari objek otentikasi (jika Anda menggunakan otentikasi)
+    const userId = req.user ? req.user.id : null;
+
+    if (!userId) {
+        return response(401, { error: 'Unauthorized' }, 'Unauthorized', res);
+    }
+
+    // Update item di keranjang belanja pengguna (contoh: menggunakan sesi atau database)
+    db_ecommerce.query('UPDATE carts SET quantity = ? WHERE id = ? AND userId = ?', [quantity, cartItemId, userId], (err, result) => {
+        if (err) {
+            console.error('Error updating cart item: ' + err.message);
+            return response(500, { error: 'Gagal mengupdate produk di keranjang' }, 'Gagal mengupdate produk di keranjang', res);
+        }
+
+        if (result.affectedRows === 0) {
+            return response(404, { error: 'Item in cart not found' }, 'Item in cart not found', res);
+        }
+
+        return response(200, { message: 'Produk di keranjang berhasil diupdate' }, 'Produk di keranjang berhasil diupdate', res);
+    });
+}
+
 module.exports = {
-    addToCart, getCart
+    addToCart, getCart, updateCartItem
 };

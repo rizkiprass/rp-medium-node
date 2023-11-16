@@ -7,5 +7,6 @@ const router = express.Router();
 // Route for adding product to cart
 router.post('/add', authenticateToken, cartController.addToCart);
 router.get('/', authenticateToken, cartController.getCart);
+router.put('/update', authenticateToken, cartController.updateCartItem);
 
 module.exports = router;
