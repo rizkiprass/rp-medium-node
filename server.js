@@ -2,12 +2,29 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 const bodyParser = require("body-parser");
-const db = require("./connection");
+const db = require("./connection.js");
+const db_ecommerce = require("./connection2");
+const response = require("./utils/response.js");
+const multer = require("multer");
 
+//middleware
 app.use(cors());
 app.use(bodyParser.json());
+app.use(express.json());
 
 const port = 8080;
+
+// Konfigurasi multer untuk menyimpan file di folder tertentu
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/"); // Folder tempat gambar akan disimpan
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + "-" + file.originalname); // Nama file yang disimpan
+  },
+});
+
+const upload = multer({ storage: storage });
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
@@ -16,6 +33,12 @@ app.get("/", (req, res) => {
 app.get("/api", (req, res) => {
   res.json({ users: ["userOne", "userTwo", "userThree"] });
 });
+
+//response.js format dari dea afrizal
+app.get("/api2", (req, res) => {
+  response(200, ["userOne", "userTwo", "userThree"], "ini message", res);
+});
+
 
 app.get("/db", (req, res) => {
   const sql = "SELECT * FROM user";
@@ -28,6 +51,16 @@ app.get("/db", (req, res) => {
     }
   });
 });
+
+
+//new
+const productsRoutes = require('./routes/productsRoutes.js');
+const authRoutes = require('./routes/authRoutes.js');
+const cartRoutes = require('./routes/cartRoutes.js');
+
+app.use('/products', productsRoutes);
+app.use('/auth', authRoutes);
+app.use('/cart', cartRoutes);
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
