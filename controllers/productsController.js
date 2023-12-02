@@ -2,7 +2,7 @@ const db_ecommerce = require('../db/db_ecommerce');
 const response = require('../utils/response.js');
 
 function getAllProducts(req, res) {
-  db_ecommerce.query('SELECT * FROM products', (err, results) => {
+  db_ecommerce.query('SELECT * FROM Products', (err, results) => {
     if (err) {
       console.error('Error fetching products: ' + err.message);
       response(500, null, 'Gagal mengambil data produk', res);
@@ -12,82 +12,87 @@ function getAllProducts(req, res) {
   });
 }
 
-
 function addProduct(req, res) {
-  const { name, price, stock } = req.body;
+  const { ProductName, Description, Price, StockQuantity, CategoryID } = req.body;
   const image = req.file ? req.file.filename : null;
 
-  if (!name || name.trim() === "") {
-    response(400, { error: 'Name cannot be null or empty' }, 'Name cannot be null or empty', res);
+  if (!ProductName || ProductName.trim() === "") {
+    response(400, { error: 'ProductName cannot be null or empty' }, 'ProductName cannot be null or empty', res);
   } else {
-    const newProduct = { name, price, stock, image };
+    const newProduct = { ProductName, Description, Price, StockQuantity, CategoryID, Image: image };
 
-    db_ecommerce.query('INSERT INTO products SET ?', newProduct, (err, result) => {
+    db_ecommerce.query('INSERT INTO Products SET ?', newProduct, (err, result) => {
       if (err) {
         console.error('Error inserting product: ' + err.message);
-        response(500, { error: 'Gagal menambahkan produk' }, 'Gagal menambahkan produk', res);
+        response(500, { error: 'Failed to add the product' }, 'Failed to add the product', res);
       } else {
-        console.log('Produk berhasil ditambahkan');
-        response(201, { message: 'Produk berhasil ditambahkan' }, 'Produk berhasil ditambahkan', res);
+        console.log('Product added successfully');
+        response(201, { message: 'Product added successfully' }, 'Product added successfully', res);
       }
     });
   }
 }
 
+function deleteProduct(req, res) {
+  const productId = req.params.id;
 
-
-  function deleteProduct(req, res) {
-    const productId = req.params.id;
-  
-    db_ecommerce.query('DELETE FROM products WHERE id = ?', productId, (err, result) => {
-      if (err) {
-        console.error('Error deleting product: ' + err.message);
-        response(500, null, 'Gagal menghapus produk', res);
-      } else {
-        if (result.affectedRows === 0) {
-          response(404, null, 'Produk tidak ditemukan', res);
-        } else {
-          console.log('Produk berhasil dihapus');
-          response(200, null, 'Produk berhasil dihapus', res);
-        }
-      }
-    });
-  }
-
-  function getProductById(req, res) {
-    const productId = req.params.id;
-  
-    db_ecommerce.query('SELECT * FROM products WHERE id = ?', [productId], (err, results) => {
-      if (err) {
-        console.error('Error fetching product: ' + err.message);
-        response(500, null, 'Gagal mengambil data produk', res);
-      } else if (results.length === 0) {
+  db_ecommerce.query('DELETE FROM Products WHERE ProductID = ?', productId, (err, result) => {
+    if (err) {
+      console.error('Error deleting product: ' + err.message);
+      response(500, null, 'Gagal menghapus produk', res);
+    } else {
+      if (result.affectedRows === 0) {
         response(404, null, 'Produk tidak ditemukan', res);
       } else {
-        response(200, results[0], 'Data produk berhasil diambil', res);
+        console.log('Produk berhasil dihapus');
+        response(200, null, 'Produk berhasil dihapus', res);
       }
-    });
+    }
+  });
+}
+
+function getProductById(req, res) {
+  const productId = req.params.id;
+
+  db_ecommerce.query('SELECT * FROM Products WHERE ProductID = ?', [productId], (err, results) => {
+    if (err) {
+      console.error('Error fetching product: ' + err.message);
+      response(500, null, 'Gagal mengambil data produk', res);
+    } else if (results.length === 0) {
+      response(404, null, 'Produk tidak ditemukan', res);
+    } else {
+      response(200, results[0], 'Data produk berhasil diambil', res);
+    }
+  });
+}
+
+function updateProductById(req, res) {
+  const productId = req.params.id;
+  const { ProductName, Description, Price, StockQuantity, CategoryID } = req.body;
+  const updatedProduct = { ProductName, Description, Price, StockQuantity, CategoryID };
+  
+  // Check if req.file exists to determine whether to update the Image column
+  if (req.file) {
+    updatedProduct.Image = req.file.filename;
   }
 
-  function updateProductById(req, res) {
-    const productId = req.params.id;
-    const { name, price, stock } = req.body;
-    const updatedProduct = { name, price, stock };
-  
-    db_ecommerce.query('UPDATE products SET ? WHERE id = ?', [updatedProduct, productId], (err, result) => {
-      if (err) {
-        console.error('Error updating product: ' + err.message);
-        response(500, null, 'Gagal mengupdate produk', res);
-      } else if (result.affectedRows === 0) {
-        response(404, null, 'Produk tidak ditemukan', res);
-      } else {
-        console.log('Produk berhasil diupdate');
-        response(200, null, 'Produk berhasil diupdate', res);
-      }
-    });
-  }
-  
+  db_ecommerce.query('UPDATE Products SET ? WHERE ProductID = ?', [updatedProduct, productId], (err, result) => {
+    if (err) {
+      console.error('Error updating product: ' + err.message);
+      response(500, null, 'Failed to update the product', res);
+    } else if (result.affectedRows === 0) {
+      response(404, null, 'Product not found', res);
+    } else {
+      console.log('Product updated successfully');
+      response(200, null, 'Product updated successfully', res);
+    }
+  });
+}
 
 module.exports = {
-  getAllProducts, addProduct, deleteProduct, getProductById, updateProductById
+  getAllProducts,
+  addProduct,
+  deleteProduct,
+  getProductById,
+  updateProductById
 };

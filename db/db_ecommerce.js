@@ -6,6 +6,6 @@ const db_ecommerce = mysql.createConnection({
     host: process.env.DB_ENDPOINT,
     user: "app",
     password: process.env.DB_PASS,
-    database: "ecommerce_db",
+    database: "tp_db", //change
   });
   module.exports = db_ecommerce;

@@ -57,10 +57,16 @@ app.get("/db", (req, res) => {
 const productsRoutes = require('./routes/productsRoutes.js');
 const authRoutes = require('./routes/authRoutes.js');
 const cartRoutes = require('./routes/cartRoutes.js');
+const routerRoutes = require('./routes/categoriesRoutes.js');
+const ordersRoutes = require('./routes/ordersRoutes');
+const ordersDetailsRoutes = require('./routes/ordersDetailsRoutes');
 
 app.use('/products', productsRoutes);
 app.use('/auth', authRoutes);
 app.use('/cart', cartRoutes);
+app.use('/categories', routerRoutes);
+app.use('/orders', ordersRoutes);
+app.use('/orderDetails', ordersDetailsRoutes);
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
