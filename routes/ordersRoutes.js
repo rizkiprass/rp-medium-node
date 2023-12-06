@@ -1,14 +1,13 @@
 const express = require('express');
-const ordersController = require('../controllers/ordersController');
+const orderController = require('../controllers/ordersController');
 const authenticateToken = require('../middleware/authenticateToken');
 
 const router = express.Router();
 
-// Route to get all orders
-// router.get('/', ordersController.getAllOrders);
-router.get('/getOrdersByCustomer', authenticateToken, ordersController.getOrdersByCustomer);
+// Endpoint untuk menempatkan pesanan
+router.post('/placeOrder', authenticateToken, orderController.placeOrder);
 
+// Endpoint untuk mendapatkan riwayat pesanan pelanggan
+router.get('/orderHistory', authenticateToken, orderController.getOrderHistory);
 
-// Route to add a new order
-router.post('/add', authenticateToken, ordersController.addOrder);
 module.exports = router;

@@ -69,11 +69,22 @@ function getProductById(req, res) {
 function updateProductById(req, res) {
   const productId = req.params.id;
   const { ProductName, Description, Price, StockQuantity, CategoryID } = req.body;
-  const updatedProduct = { ProductName, Description, Price, StockQuantity, CategoryID };
-  
+
   // Check if req.file exists to determine whether to update the Image column
+  const updatedProduct = {
+    ProductName: ProductName || null,
+    Description: Description || null,
+    Price: Price || null,
+    StockQuantity: StockQuantity || null,
+    CategoryID: CategoryID || null,
+  };
+
   if (req.file) {
     updatedProduct.Image = req.file.filename;
+  } else {
+    // If no new image is provided, you should still send the existing image filename or an empty string
+    // Adjust this part based on your database structure
+    updatedProduct.Image = ''; // Change this line based on your actual structure
   }
 
   db_ecommerce.query('UPDATE Products SET ? WHERE ProductID = ?', [updatedProduct, productId], (err, result) => {
@@ -88,6 +99,8 @@ function updateProductById(req, res) {
     }
   });
 }
+
+
 
 module.exports = {
   getAllProducts,

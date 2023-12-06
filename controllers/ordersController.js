@@ -1,49 +1,97 @@
 const db_ecommerce = require('../db/db_ecommerce');
 const response = require('../utils/response.js');
+const { calculateTotalAmount } = require('../utils/helper.js');
 
-function getOrdersByCustomer(req, res) {
+function placeOrder(req, res) {
     const userId = req.user ? req.user.id : null;
   
     if (!userId) {
       return response(401, { error: 'Unauthorized' }, 'Unauthorized', res);
     }
   
-    db_ecommerce.query('SELECT * FROM Orders WHERE CustomerID = ?', userId, (err, results) => {
-      if (err) {
-        console.error('Error fetching orders: ' + err.message);
-        return response(500, null, 'Gagal mengambil data pesanan', res);
-      } else {
-        return response(200, results, 'Data pesanan berhasil diambil', res);
+    // Ambil item dari keranjang pengguna dengan informasi produk
+    db_ecommerce.query(
+      'SELECT Cart.CartID, Cart.CustomerID, Cart.ProductID, Cart.Quantity, Products.Price FROM Cart JOIN Products ON Cart.ProductID = Products.ProductID WHERE Cart.CustomerID = ?',
+      [userId],
+      (err, cartItems) => {
+        if (err) {
+          console.error('Error fetching cart items: ' + err.message);
+          return response(500, null, 'Gagal mengambil data keranjang belanja', res);
+        }
+  
+        // Proses item keranjang untuk membuat pesanan
+        const totalAmount = calculateTotalAmount(cartItems);
+  
+        // Insert pesanan ke tabel Orders
+        const orderData = {
+          CustomerID: userId,
+          OrderDate: new Date(),
+          TotalAmount: totalAmount,
+          PaymentMethod: 'Metode Pembayaran Default', // Gantilah dengan metode pembayaran yang sesuai
+        };
+  
+        db_ecommerce.query('INSERT INTO Orders SET ?', orderData, (insertOrderErr, orderResult) => {
+          if (insertOrderErr) {
+            console.error('Error inserting order: ' + insertOrderErr.message);
+            return response(500, null, 'Gagal membuat pesanan', res);
+          }
+  
+          const orderId = orderResult.insertId;
+  
+          // Insert detail pesanan ke tabel OrderDetails
+          const orderDetailsData = cartItems.map(cartItem => {
+            return {
+              OrderID: orderId,
+              ProductID: cartItem.ProductID,
+              Quantity: cartItem.Quantity,
+              Subtotal: cartItem.Quantity * cartItem.Price,
+            };
+          });
+  
+          db_ecommerce.query(
+            'INSERT INTO OrderDetails (OrderID, ProductID, Quantity, Subtotal) VALUES ?',
+            [orderDetailsData.map(item => [item.OrderID, item.ProductID, item.Quantity, item.Subtotal])],
+            (insertDetailsErr) => {
+              if (insertDetailsErr) {
+                console.error('Error inserting order details: ' + insertDetailsErr.message);
+                return response(500, null, 'Gagal membuat detail pesanan', res);
+              }
+  
+              // Hapus item dari keranjang
+              db_ecommerce.query('DELETE FROM Cart WHERE CustomerID = ?', [userId], (deleteErr) => {
+                if (deleteErr) {
+                  console.error('Error deleting cart items: ' + deleteErr.message);
+                  return response(500, null, 'Gagal menghapus item dari keranjang', res);
+                }
+  
+                return response(200, { message: 'Pesanan berhasil ditempatkan' }, 'Pesanan berhasil ditempatkan', res);
+              });
+            }
+          );
+        });
       }
-    });
+    );
+  }
+  
+function getOrderHistory(req, res) {
+  const userId = req.user ? req.user.id : null;
+
+  if (!userId) {
+      return response(401, { error: 'Unauthorized' }, 'Unauthorized', res);
   }
 
-function addOrder(req, res) {
-  const { customerId, orderDate, totalAmount, paymentMethod } = req.body;
-
-  if (!customerId || !orderDate || !totalAmount || !paymentMethod) {
-    response(400, { error: 'Invalid input' }, 'Invalid input', res);
-  } else {
-    const newOrder = {
-      CustomerID: customerId,
-      OrderDate: orderDate,
-      TotalAmount: totalAmount,
-      PaymentMethod: paymentMethod
-    };
-
-    db_ecommerce.query('INSERT INTO Orders SET ?', newOrder, (err, result) => {
+  // Ambil riwayat pesanan pengguna dari database
+  db_ecommerce.query('SELECT * FROM Orders WHERE CustomerID = ?', [userId], (err, orderHistory) => {
       if (err) {
-        console.error('Error adding order: ' + err.message);
-        response(500, { error: 'Failed to add order' }, 'Failed to add order', res);
-      } else {
-        console.log('Order added successfully');
-        response(201, { message: 'Order added successfully' }, 'Order added successfully', res);
+          console.error('Error fetching order history: ' + err.message);
+          return response(500, null, 'Gagal mengambil riwayat pesanan', res);
       }
-    });
-  }
+
+      return response(200, orderHistory, 'Riwayat pesanan berhasil diambil', res);
+  });
 }
 
 module.exports = {
-    getOrdersByCustomer,
-  addOrder
+  placeOrder,
+  getOrderHistory
 };
