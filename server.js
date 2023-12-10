@@ -2,8 +2,6 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 const bodyParser = require("body-parser");
-const db = require("./connection.js");
-const db_ecommerce = require("./connection2");
 const response = require("./utils/response.js");
 const multer = require("multer");
 
