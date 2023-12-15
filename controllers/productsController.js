@@ -1,5 +1,7 @@
+const multer = require('multer');  // Move the import statement to the top
 const db_ecommerce = require('../db/db_ecommerce');
 const response = require('../utils/response.js');
+const uploadMiddleware = require('../middleware/multerMiddleware.js'); // Adjust the path accordingly
 
 function getAllProducts(req, res) {
   db_ecommerce.query('SELECT * FROM Products', (err, results) => {
@@ -13,24 +15,32 @@ function getAllProducts(req, res) {
 }
 
 function addProduct(req, res) {
-  const { ProductName, Description, Price, StockQuantity, CategoryID } = req.body;
-  const image = req.file ? req.file.filename : null;
+  uploadMiddleware(req, res, function (err) {
+    if (err instanceof multer.MulterError) {
+      response(500, { error: 'Error uploading file' }, 'Error uploading file', res);
+    } else if (err) {
+      response(500, { error: err.message }, err.message, res);
+    } else {
+      const { ProductName, Description, Price, StockQuantity, CategoryID } = req.body;
+      const image = req.file ? req.file.filename : null;
 
-  if (!ProductName || ProductName.trim() === "") {
-    response(400, { error: 'ProductName cannot be null or empty' }, 'ProductName cannot be null or empty', res);
-  } else {
-    const newProduct = { ProductName, Description, Price, StockQuantity, CategoryID, Image: image };
-
-    db_ecommerce.query('INSERT INTO Products SET ?', newProduct, (err, result) => {
-      if (err) {
-        console.error('Error inserting product: ' + err.message);
-        response(500, { error: 'Failed to add the product' }, 'Failed to add the product', res);
+      if (!ProductName || ProductName.trim() === "") {
+        response(400, { error: 'ProductName cannot be null or empty' }, 'ProductName cannot be null or empty', res);
       } else {
-        console.log('Product added successfully');
-        response(201, { message: 'Product added successfully' }, 'Product added successfully', res);
+        const newProduct = { ProductName, Description, Price, StockQuantity, CategoryID, Image: image };
+
+        db_ecommerce.query('INSERT INTO Products SET ?', newProduct, (err, result) => {
+          if (err) {
+            console.error('Error inserting product: ' + err.message);
+            response(500, { error: 'Failed to add the product' }, 'Failed to add the product', res);
+          } else {
+            console.log('Product added successfully');
+            response(201, { message: 'Product added successfully' }, 'Product added successfully', res);
+          }
+        });
       }
-    });
-  }
+    }
+  });
 }
 
 function deleteProduct(req, res) {

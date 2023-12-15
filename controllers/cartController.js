@@ -75,18 +75,34 @@ function addToCart(req, res) {
 function getCart(req, res) {
     // Mendapatkan ID pengguna dari objek otentikasi (jika Anda menggunakan otentikasi)
     const customerId = req.user ? req.user.id : null;
-  
+
     if (!customerId) {
         return response(401, { error: 'Unauthorized' }, 'Unauthorized', res);
     }
-  
-    // Mendapatkan isi keranjang belanja dari database
-    db_ecommerce.query('SELECT * FROM Cart WHERE CustomerID = ?', [customerId], (err, results) => {
+
+    // Menggabungkan tabel Cart dan Products untuk mendapatkan detail produk
+    const query = `
+        SELECT 
+            Cart.CartID,
+            Cart.CustomerID,
+            Cart.ProductID,
+            Cart.Quantity,
+            Products.ProductName,
+            Products.Description,
+            Products.Price,
+            Products.StockQuantity,
+            Products.CategoryID,
+            Products.Image
+        FROM Cart
+        INNER JOIN Products ON Cart.ProductID = Products.ProductID
+        WHERE Cart.CustomerID = ?`;
+
+    db_ecommerce.query(query, [customerId], (err, results) => {
         if (err) {
             console.error('Error fetching cart items: ' + err.message);
             return response(500, null, 'Gagal mengambil data keranjang belanja', res);
         }
-  
+
         return response(200, results, 'Data keranjang belanja berhasil diambil', res);
     });
 }
