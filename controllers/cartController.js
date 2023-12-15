@@ -167,6 +167,36 @@ function deleteCartItem(req, res) {
     });
 }
 
+function getCartItemById(req, res) {
+    const { id } = req.params;
+
+    // Validasi input
+    if (!id) {
+        return response(400, { error: 'Invalid input' }, 'Invalid input', res);
+    }
+
+    // Mendapatkan ID pengguna dari objek otentikasi (jika Anda menggunakan otentikasi)
+    const customerId = req.user ? req.user.id : null;
+
+    if (!customerId) {
+        return response(401, { error: 'Unauthorized' }, 'Unauthorized', res);
+    }
+
+    // Mendapatkan informasi produk dari database
+    db_ecommerce.query('SELECT * FROM Cart WHERE CartID = ? AND CustomerID = ?', [id, customerId], (err, results) => {
+        if (err) {
+            console.error('Error fetching cart item: ' + err.message);
+            return response(500, null, 'Gagal mengambil data item keranjang belanja', res);
+        }
+
+        if (results.length === 0) {
+            return response(404, null, 'Item in cart not found', res);
+        }
+
+        return response(200, results[0], 'Data item keranjang belanja berhasil diambil', res);
+    });
+}
+
 module.exports = {
-    addToCart, getCart, updateCartItem, deleteCartItem
+    addToCart, getCart, updateCartItem, deleteCartItem, getCartItemById
 };
