@@ -4,6 +4,7 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const response = require("./utils/response.js");
 const multer = require("multer");
+const path = require("path");
 
 //middleware
 app.use(cors());
@@ -48,6 +49,13 @@ app.get("/db", (req, res) => {
       res.json(result);
     }
   });
+});
+
+// Serve images from the /uploads folder with cache headers
+app.use('/uploads', (req, res, next) => {
+  // Set Cache-Control headers to allow caching for 1 hour (3600 seconds)
+  res.setHeader('Cache-Control', 'public, max-age=10');
+  express.static(path.join(__dirname, 'uploads'))(req, res, next);
 });
 
 

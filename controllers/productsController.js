@@ -2,15 +2,19 @@ const multer = require('multer');  // Move the import statement to the top
 const db_ecommerce = require('../db/db_ecommerce');
 const response = require('../utils/response.js');
 const uploadMiddleware = require('../middleware/multerMiddleware.js'); // Adjust the path accordingly
+const setCacheControl = require('../middleware/cacheControlMiddleware.js');
 
 function getAllProducts(req, res) {
-  db_ecommerce.query('SELECT * FROM Products', (err, results) => {
-    if (err) {
-      console.error('Error fetching products: ' + err.message);
-      response(500, null, 'Gagal mengambil data produk', res);
-    } else {
-      response(200, results, 'Data produk berhasil diambil', res);
-    }
+  // Use setCacheControl middleware before sending the response
+  setCacheControl(req, res, () => {
+    db_ecommerce.query('SELECT * FROM Products', (err, results) => {
+      if (err) {
+        console.error('Error fetching products: ' + err.message);
+        response(500, null, 'Gagal mengambil data produk', res);
+      } else {
+        response(200, results, 'Data produk berhasil diambil', res);
+      }
+    });
   });
 }
 
