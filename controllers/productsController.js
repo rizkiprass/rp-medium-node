@@ -20,9 +20,11 @@ function getAllProducts(req, res) {
 
 function addProduct(req, res) {
   uploadMiddleware(req, res, function (err) {
-    if (err instanceof multer.MulterError) {
+if (err instanceof multer.MulterError) {
+      console.error('MulterError:', err);
       response(500, { error: 'Error uploading file' }, 'Error uploading file', res);
     } else if (err) {
+      console.error('Upload error:', err);
       response(500, { error: err.message }, err.message, res);
     } else {
       const { ProductName, Description, Price, StockQuantity, CategoryID } = req.body;
