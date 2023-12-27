@@ -1,53 +1,69 @@
-const multer = require('multer');  // Move the import statement to the top
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+const multerS3 = require('multer-s3');
+const multer = require('multer');
 const db_ecommerce = require('../db/db_ecommerce');
 const response = require('../utils/response.js');
-const uploadMiddleware = require('../middleware/multerMiddleware.js'); // Adjust the path accordingly
+const uploadMiddleware = require('../middleware/multerMiddleware.js');
 const setCacheControl = require('../middleware/cacheControlMiddleware.js');
+require('dotenv').config();
 
 function getAllProducts(req, res) {
   // Use setCacheControl middleware before sending the response
-  setCacheControl(req, res, () => {
-    db_ecommerce.query('SELECT * FROM Products', (err, results) => {
-      if (err) {
-        console.error('Error fetching products: ' + err.message);
-        response(500, null, 'Gagal mengambil data produk', res);
-      } else {
-        response(200, results, 'Data produk berhasil diambil', res);
-      }
-    });
-  });
-}
+  setCacheControl(req, res, async () => {
+    try {
+      // Get a connection from the pool
+      const connection = await db_ecommerce.getConnection();
 
-function addProduct(req, res) {
-  uploadMiddleware(req, res, function (err) {
-if (err instanceof multer.MulterError) {
-      console.error('MulterError:', err);
-      response(500, { error: 'Error uploading file' }, 'Error uploading file', res);
-    } else if (err) {
-      console.error('Upload error:', err);
-      response(500, { error: err.message }, err.message, res);
-    } else {
-      const { ProductName, Description, Price, StockQuantity, CategoryID } = req.body;
-      const image = req.file ? req.file.filename : null;
+      // Use the connection to query the database
+      const results = await connection.query('SELECT * FROM Products');
 
-      if (!ProductName || ProductName.trim() === "") {
-        response(400, { error: 'ProductName cannot be null or empty' }, 'ProductName cannot be null or empty', res);
-      } else {
-        const newProduct = { ProductName, Description, Price, StockQuantity, CategoryID, Image: image };
+      // Release the connection back to the pool
+      connection.release();
 
-        db_ecommerce.query('INSERT INTO Products SET ?', newProduct, (err, result) => {
-          if (err) {
-            console.error('Error inserting product: ' + err.message);
-            response(500, { error: 'Failed to add the product' }, 'Failed to add the product', res);
-          } else {
-            console.log('Product added successfully');
-            response(201, { message: 'Product added successfully' }, 'Product added successfully', res);
-          }
-        });
-      }
+      response(200, results[0], 'Data produk berhasil diambil', res);
+    } catch (err) {
+      console.error('Error fetching products: ' + err.message);
+      response(500, null, 'Gagal mengambil data produk', res);
     }
   });
 }
+
+async function addProduct(req, res) {
+  try {
+    // Use the multer middleware here
+    await uploadMiddleware(req, res, async function (err) {
+      if (err instanceof multer.MulterError) {
+        console.error('MulterError:', err);
+        response(500, { error: 'Error uploading file' }, 'Error uploading file', res);
+        return;
+      } else if (err) {
+        console.error('Upload error:', err);
+        response(500, { error: err.message }, err.message, res);
+        return;
+      }
+
+      const { ProductName, Description, Price, StockQuantity, CategoryID } = req.body;
+      const image = req.file ? req.file.location : null;
+
+      if (!ProductName || ProductName.trim() === "") {
+        response(400, { error: 'ProductName cannot be null or empty' }, 'ProductName cannot be null or empty', res);
+        return;
+      }
+
+      const newProduct = { ProductName, Description, Price, StockQuantity, CategoryID, Image: image };
+
+      // Insert product into the database
+      const result = await db_ecommerce.query('INSERT INTO Products SET ?', newProduct);
+
+      console.log('Product added successfully');
+      response(201, { message: 'Product added successfully' }, 'Product added successfully', res);
+    });
+  } catch (err) {
+    console.error('Error adding product:', err.message);
+    response(500, { error: 'Failed to add the product' }, 'Failed to add the product', res);
+  }
+}
+
 
 function deleteProduct(req, res) {
   const productId = req.params.id;
