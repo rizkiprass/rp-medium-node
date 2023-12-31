@@ -1,4 +1,4 @@
-const db_ecommerce = require('../db/db_ecommerce');
+const db_ecommerce_1 = require('../db/db_ecommerce_1');
 const response = require('../utils/response.js');
 
 function addToCart(req, res) {
@@ -17,7 +17,7 @@ function addToCart(req, res) {
     }
   
     // Mendapatkan informasi produk dari database
-    db_ecommerce.query('SELECT * FROM Products WHERE productId = ?', [productId], (err, results) => {
+    db_ecommerce_1.query('SELECT * FROM Products WHERE productId = ?', [productId], (err, results) => {
         if (err) {
             console.error('Error fetching product: ' + err.message);
             return response(500, null, 'Gagal mengambil data produk', res);
@@ -30,7 +30,7 @@ function addToCart(req, res) {
         const product = results[0];
   
         // Periksa apakah produk sudah ada di dalam keranjang pengguna
-        db_ecommerce.query('SELECT * FROM Cart WHERE CustomerID = ? AND ProductID = ?', [customerId, productId], (err, cartResults) => {
+        db_ecommerce_1.query('SELECT * FROM Cart WHERE CustomerID = ? AND ProductID = ?', [customerId, productId], (err, cartResults) => {
             if (err) {
                 console.error('Error fetching cart items: ' + err.message);
                 return response(500, null, 'Gagal mengambil data keranjang belanja', res);
@@ -42,7 +42,7 @@ function addToCart(req, res) {
                 const updatedQuantity = existingCartItem.Quantity + quantity;
   
                 // Update quantity produk di keranjang
-                db_ecommerce.query('UPDATE Cart SET Quantity = ? WHERE CartID = ?', [updatedQuantity, existingCartItem.CartID], (updateErr) => {
+                db_ecommerce_1.query('UPDATE Cart SET Quantity = ? WHERE CartID = ?', [updatedQuantity, existingCartItem.CartID], (updateErr) => {
                     if (updateErr) {
                         console.error('Error updating cart item: ' + updateErr.message);
                         return response(500, null, 'Gagal mengupdate item keranjang belanja', res);
@@ -59,7 +59,7 @@ function addToCart(req, res) {
                 };
   
                 // Tambahkan item baru ke keranjang
-                db_ecommerce.query('INSERT INTO Cart SET ?', cartItem, (insertErr) => {
+                db_ecommerce_1.query('INSERT INTO Cart SET ?', cartItem, (insertErr) => {
                     if (insertErr) {
                         console.error('Error adding to cart: ' + insertErr.message);
                         return response(500, { error: 'Gagal menambahkan produk ke keranjang' }, 'Gagal menambahkan produk ke keranjang', res);
@@ -97,7 +97,7 @@ function getCart(req, res) {
         INNER JOIN Products ON Cart.ProductID = Products.ProductID
         WHERE Cart.CustomerID = ?`;
 
-    db_ecommerce.query(query, [customerId], (err, results) => {
+    db_ecommerce_1.query(query, [customerId], (err, results) => {
         if (err) {
             console.error('Error fetching cart items: ' + err.message);
             return response(500, null, 'Gagal mengambil data keranjang belanja', res);
@@ -123,7 +123,7 @@ function updateCartItem(req, res) {
     }
 
     // Update item di keranjang belanja pengguna (contoh: menggunakan sesi atau database)
-    db_ecommerce.query('UPDATE Cart SET Quantity = ? WHERE CartID = ? AND CustomerID = ?', [quantity, cartItemId, customerId], (err, result) => {
+    db_ecommerce_1.query('UPDATE Cart SET Quantity = ? WHERE CartID = ? AND CustomerID = ?', [quantity, cartItemId, customerId], (err, result) => {
         if (err) {
             console.error('Error updating cart item: ' + err.message);
             return response(500, { error: 'Gagal mengupdate produk di keranjang' }, 'Gagal mengupdate produk di keranjang', res);
@@ -153,7 +153,7 @@ function deleteCartItem(req, res) {
     }
 
     // Hapus item dari keranjang belanja pengguna (contoh: menggunakan sesi atau database)
-    db_ecommerce.query('DELETE FROM Cart WHERE CartID = ? AND CustomerID = ?', [id, customerId], (err, result) => {
+    db_ecommerce_1.query('DELETE FROM Cart WHERE CartID = ? AND CustomerID = ?', [id, customerId], (err, result) => {
         if (err) {
             console.error('Error deleting cart item: ' + err.message);
             return response(500, { error: 'Gagal menghapus produk dari keranjang' }, 'Gagal menghapus produk dari keranjang', res);
@@ -183,7 +183,7 @@ function getCartItemById(req, res) {
     }
 
     // Mendapatkan informasi produk dari database
-    db_ecommerce.query('SELECT * FROM Cart WHERE CartID = ? AND CustomerID = ?', [id, customerId], (err, results) => {
+    db_ecommerce_1.query('SELECT * FROM Cart WHERE CartID = ? AND CustomerID = ?', [id, customerId], (err, results) => {
         if (err) {
             console.error('Error fetching cart item: ' + err.message);
             return response(500, null, 'Gagal mengambil data item keranjang belanja', res);

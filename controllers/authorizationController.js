@@ -1,5 +1,5 @@
 const bcrypt = require('bcrypt');
-const db_ecommerce = require('../db/db_ecommerce');
+const db_ecommerce_1 = require('../db/db_ecommerce_1');
 const response = require('../utils/response');
 const jwt = require('jsonwebtoken');
 
@@ -15,7 +15,7 @@ function registerUser(req, res) {
       response(500, null, 'Terjadi kesalahan saat registrasi', res);
     } else {
       const customer = { FirstName, LastName, Email, Password: hash, Address };
-      db_ecommerce.query('INSERT INTO Customers SET ?', customer, (error, results) => {
+      db_ecommerce_1.query('INSERT INTO Customers SET ?', customer, (error, results) => {
         if (error) {
           console.error('Gagal menyimpan data ke database: ' + error);
           response(500, null, 'Terjadi kesalahan saat registrasi', res);
@@ -30,7 +30,7 @@ function registerUser(req, res) {
 function loginUser(req, res) {
   const { Email, Password } = req.body;
 
-  db_ecommerce.query('SELECT * FROM Customers WHERE Email = ?', Email, (error, results) => {
+  db_ecommerce_1.query('SELECT * FROM Customers WHERE Email = ?', Email, (error, results) => {
     if (error) {
       console.error('Gagal mengambil data dari database: ' + error);
       response(500, null, 'Terjadi kesalahan saat login.', res);
